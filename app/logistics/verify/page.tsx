@@ -14,7 +14,7 @@ import { clsx } from "clsx";
 
 const CORRECT_CODE = "7842";
 
-function getStageContent(stage: RelayStage, userName: string) {
+function getStageContent(stage: RelayStage) {
   switch (stage) {
     case RelayStage.driver_assigned:
       return {
@@ -64,7 +64,7 @@ function getStageContent(stage: RelayStage, userName: string) {
 export default function LogisticsVerifyPage() {
   const router = useRouter();
   const { booking, currentStage, advanceStage } = useStore();
-  const content = getStageContent(currentStage, booking.user.name);
+  const content = getStageContent(currentStage);
   const { showToast } = useToast();
   const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
