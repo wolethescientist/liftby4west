@@ -14,9 +14,57 @@ import { clsx } from "clsx";
 
 const CORRECT_CODE = "7842";
 
+function getStageContent(stage: RelayStage, userName: string) {
+  switch (stage) {
+    case RelayStage.driver_assigned:
+      return {
+        title: "Verify Pickup",
+        desc: "Verify the passenger's handover code before collecting their luggage.",
+        toastTitle: "Pickup verified!",
+        toastMsg: "You can now head to the airport.",
+      };
+    case RelayStage.airport_handoff:
+      return {
+        title: "Verify In Flight",
+        desc: "Verify the code to confirm the bags are in flight.",
+        toastTitle: "In Flight verified!",
+        toastMsg: "Bags are now confirmed in flight.",
+      };
+    case RelayStage.in_flight:
+      return {
+        title: "Verify Destination",
+        desc: "Verify the code to confirm bags arrived at destination.",
+        toastTitle: "Destination verified!",
+        toastMsg: "Bags received at destination airport.",
+      };
+    case RelayStage.destination_received:
+      return {
+        title: "Verify Out For Delivery",
+        desc: "Verify the code to start delivery.",
+        toastTitle: "Delivery started!",
+        toastMsg: "Bags are out for delivery.",
+      };
+    case RelayStage.out_for_delivery:
+      return {
+        title: "Verify Delivery",
+        desc: "Verify the code to confirm final delivery to the passenger.",
+        toastTitle: "Delivery verified!",
+        toastMsg: "Bags successfully delivered.",
+      };
+    default:
+      return {
+        title: "Verify Step",
+        desc: "Verify the code to continue.",
+        toastTitle: "Verified!",
+        toastMsg: "Stage updated.",
+      };
+  }
+}
+
 export default function LogisticsVerifyPage() {
   const router = useRouter();
-  const { booking, updateBooking } = useStore();
+  const { booking, currentStage, advanceStage } = useStore();
+  const content = getStageContent(currentStage, booking.user.name);
   const { showToast } = useToast();
   const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
@@ -63,10 +111,10 @@ export default function LogisticsVerifyPage() {
     const code = digits.join("");
     if (code === CORRECT_CODE) {
       setSuccess(true);
-      updateBooking({ status: RelayStage.pickup_confirmed });
+      advanceStage();
       showToast({
-        title: "Pickup verified!",
-        message: "You can now head to the airport.",
+        title: content.toastTitle,
+        message: content.toastMsg,
         tone: "success",
       });
       window.setTimeout(() => {
@@ -93,9 +141,9 @@ export default function LogisticsVerifyPage() {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
               Logistics Portal
             </p>
-            <h1 className="mt-2 text-4xl font-black tracking-tight text-white">Verify Pickup</h1>
+            <h1 className="mt-2 text-4xl font-black tracking-tight text-white">{content.title}</h1>
             <p className="mt-3 max-w-sm text-sm font-medium text-white/80 leading-relaxed">
-              Verify the passenger&apos;s handover code before collecting their luggage.
+              {content.desc}
             </p>
           </div>
         </div>

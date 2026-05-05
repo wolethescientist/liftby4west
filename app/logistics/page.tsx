@@ -220,9 +220,7 @@ function ActiveJobView({
   booking: typeof mockBooking;
   onPrimary: () => void;
 }) {
-  const isHandoffComplete =
-    currentStage === RelayStage.airport_handoff ||
-    isAfter(currentStage, RelayStage.airport_handoff);
+  const router = useRouter();
 
   return (
     <div className="space-y-8 pb-12">
@@ -274,7 +272,39 @@ function ActiveJobView({
           />
         ) : null}
 
-        {isHandoffComplete ? (
+        {currentStage === RelayStage.airport_handoff ? (
+          <TaskCard
+            icon={Plane}
+            title="Confirm In Flight"
+            detail="Verify with airport staff to mark as in-flight"
+          />
+        ) : null}
+
+        {currentStage === RelayStage.in_flight ? (
+          <TaskCard
+            icon={Package}
+            title="Confirm Arrival"
+            detail="Verify bags received at destination"
+          />
+        ) : null}
+
+        {currentStage === RelayStage.destination_received ? (
+          <TaskCard
+            icon={Truck}
+            title="Start Delivery"
+            detail="Verify with destination driver to begin delivery"
+          />
+        ) : null}
+
+        {currentStage === RelayStage.out_for_delivery ? (
+          <TaskCard
+            icon={User}
+            title="Confirm Handover"
+            detail="Verify with passenger upon delivery"
+          />
+        ) : null}
+
+        {currentStage === RelayStage.delivered ? (
           <div className="rounded-2xl border border-success/20 bg-success/10 px-6 py-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-white shrink-0 shadow-sm">
@@ -283,7 +313,7 @@ function ActiveJobView({
               <div>
                 <p className="text-lg font-black text-success-700">Job Complete</p>
                 <p className="mt-1 text-sm font-medium text-success-700/80 leading-relaxed">
-                  Bags successfully handed to airport staff. Great work!
+                  Bags successfully delivered to the passenger. Great work!
                 </p>
               </div>
             </div>
@@ -307,6 +337,34 @@ function ActiveJobView({
         {currentStage === RelayStage.in_transit_to_airport ? (
           <Button onClick={onPrimary} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
             Confirm Airport Handoff
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        ) : null}
+
+        {currentStage === RelayStage.airport_handoff ? (
+          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+            Verify In Flight
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        ) : null}
+
+        {currentStage === RelayStage.in_flight ? (
+          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+            Verify Received at Destination
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        ) : null}
+
+        {currentStage === RelayStage.destination_received ? (
+          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+            Start Out for Delivery
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        ) : null}
+
+        {currentStage === RelayStage.out_for_delivery ? (
+          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+            Verify Delivered
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         ) : null}
@@ -364,17 +422,3 @@ function TaskCard({
   );
 }
 
-function isAfter(stage: RelayStage, target: RelayStage) {
-  const order = [
-    RelayStage.awaiting_driver,
-    RelayStage.driver_assigned,
-    RelayStage.pickup_confirmed,
-    RelayStage.in_transit_to_airport,
-    RelayStage.airport_handoff,
-    RelayStage.in_flight,
-    RelayStage.destination_received,
-    RelayStage.out_for_delivery,
-    RelayStage.delivered,
-  ];
-  return order.indexOf(stage) > order.indexOf(target);
-}
