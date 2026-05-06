@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+
 import { useState } from "react";
 import {
   ArrowRight,
@@ -27,7 +27,6 @@ const PAYOUT = "₦4,500";
 const DISTANCE = "3.2 km away";
 
 export default function LogisticsJobsPage() {
-  const router = useRouter();
   const { booking, currentStage, advanceStage } = useStore();
   const { showToast } = useToast();
   const [declined, setDeclined] = useState(false);
@@ -75,18 +74,12 @@ export default function LogisticsJobsPage() {
         currentStage={currentStage}
         booking={booking}
         onPrimary={() => {
-          if (currentStage === RelayStage.driver_assigned) {
-            router.push("/logistics/verify");
-            return;
-          }
-          if (currentStage === RelayStage.pickup_confirmed) {
-            advanceStage();
-            return;
-          }
-          if (currentStage === RelayStage.in_transit_to_airport) {
-            advanceStage();
-            return;
-          }
+          advanceStage();
+          showToast({
+            title: "Success",
+            message: "Stage updated successfully.",
+            tone: "success",
+          });
         }}
       />
     </PageTransition>
@@ -211,6 +204,8 @@ function Wallet({ className }: { className?: string }) {
   );
 }
 
+import { Map } from "@/components/ui/Map";
+
 function ActiveJobView({
   currentStage,
   booking,
@@ -220,8 +215,6 @@ function ActiveJobView({
   booking: typeof mockBooking;
   onPrimary: () => void;
 }) {
-  const router = useRouter();
-
   return (
     <div className="space-y-8 pb-12">
       <div className="relative overflow-hidden rounded-3xl bg-navy p-8 text-white shadow-xl">
@@ -241,6 +234,10 @@ function ActiveJobView({
             Follow the steps below to complete this luggage transfer.
           </p>
         </div>
+      </div>
+
+      <div className="w-full">
+        <Map currentStage={currentStage} />
       </div>
 
       <Card glass className="p-8 backdrop-blur-xl bg-white/60 border-border/40 shadow-glass rounded-3xl">
@@ -328,10 +325,7 @@ function ActiveJobView({
         ) : null}
 
         {currentStage === RelayStage.pickup_confirmed ? (
-          <Button onClick={onPrimary} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-            Start Trip to Airport
-            <ArrowRight className="h-5 w-5 ml-2" />
-          </Button>
+          <VerificationAction title="Verify Pickup & Start Trip" onVerify={onPrimary} />
         ) : null}
 
         {currentStage === RelayStage.in_transit_to_airport ? (
@@ -342,28 +336,25 @@ function ActiveJobView({
         ) : null}
 
         {currentStage === RelayStage.airport_handoff ? (
-          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+          <Button onClick={onPrimary} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
             Verify In Flight
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         ) : null}
 
         {currentStage === RelayStage.in_flight ? (
-          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+          <Button onClick={onPrimary} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
             Verify Received at Destination
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         ) : null}
 
         {currentStage === RelayStage.destination_received ? (
-          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-            Start Out for Delivery
-            <ArrowRight className="h-5 w-5 ml-2" />
-          </Button>
+          <VerificationAction title="Verify Handoff for Delivery" onVerify={onPrimary} />
         ) : null}
 
         {currentStage === RelayStage.out_for_delivery ? (
-          <Button onClick={() => router.push("/logistics/verify")} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+          <Button onClick={onPrimary} fullWidth size="lg" className="mt-8 h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
             Verify Delivered
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
@@ -418,6 +409,62 @@ function TaskCard({
         <p className="text-xl font-black text-navy tracking-tight">{title}</p>
         <p className="mt-1 text-sm font-medium text-neutral-500 leading-relaxed">{detail}</p>
       </div>
+    </div>
+  );
+}
+
+function VerificationAction({
+  title,
+  onVerify,
+  requiredCodeLength = 4,
+}: {
+  title: string;
+  onVerify: () => void;
+  requiredCodeLength?: number;
+}) {
+  const [code, setCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const { showToast } = useToast();
+
+  const handleVerify = () => {
+    if (code.length !== requiredCodeLength) {
+      showToast({
+        title: "Invalid Code",
+        message: `Please enter a valid ${requiredCodeLength}-digit verification code.`,
+        tone: "destructive",
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    // Simulate verification delay for better UX
+    setTimeout(() => {
+      setIsVerifying(false);
+      onVerify();
+    }, 800);
+  };
+
+  return (
+    <div className="mt-8 space-y-4">
+      <div className="flex gap-3">
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, requiredCodeLength))}
+          placeholder={`Enter ${requiredCodeLength}-digit auth code`}
+          className="flex-1 h-16 rounded-2xl border-2 border-navy/10 bg-white/80 px-6 text-center text-xl font-black tracking-[0.3em] text-navy placeholder:text-neutral-400 placeholder:tracking-normal focus:border-navy focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all"
+        />
+      </div>
+      <Button
+        onClick={handleVerify}
+        disabled={isVerifying || code.length !== requiredCodeLength}
+        fullWidth
+        size="lg"
+        className="h-16 rounded-2xl text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+      >
+        {isVerifying ? "Verifying..." : title}
+        {!isVerifying && <ArrowRight className="h-5 w-5 ml-2" />}
+      </Button>
     </div>
   );
 }

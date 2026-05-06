@@ -9,6 +9,8 @@ import { relayStages } from "@/lib/mockData";
 import { useStore } from "@/lib/store";
 import { RelayStage } from "@/lib/types";
 
+import { Map } from "@/components/ui/Map";
+
 function hasReached(currentStage: RelayStage, stage: RelayStage) {
   return relayStages.indexOf(currentStage) >= relayStages.indexOf(stage);
 }
@@ -27,6 +29,10 @@ export default function TrackPage() {
         </p>
         <h1 className="mt-2 font-mono text-3xl font-black text-text">{booking.id}</h1>
         <p className="mt-1 font-mono text-sm text-neutral-500">{booking.trackingId}</p>
+      </div>
+
+      <div className="w-full">
+        <Map currentStage={currentStage} />
       </div>
 
       {delivered ? (
